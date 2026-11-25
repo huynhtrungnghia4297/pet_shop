@@ -13,6 +13,7 @@ import {
   subscribeDataSync,
   writeLocalRepository,
 } from './apiClient';
+import { petService } from './petService';
 
 export const BOOKINGS_STORAGE_KEY = 'pawpalace_bookings_v1';
 
@@ -62,6 +63,10 @@ const mockBookingRepository: IBookingRepository = {
     };
 
     writeLocalRepository(BOOKINGS_STORAGE_KEY, [newBooking, ...bookings]);
+
+    // Auto-sync into Pet CRM Profiles (create new pet profile or log new visit)
+    await petService.syncFromBooking(newBooking);
+
     return buildApiResponse(newBooking, 'Đặt lịch hẹn thành công');
   },
 
@@ -82,6 +87,18 @@ const mockBookingRepository: IBookingRepository = {
     }
 
     writeLocalRepository(BOOKINGS_STORAGE_KEY, nextList);
+
+    // Sync Pet CRM when Admin confirms or completes a booking
+    if (status === 'confirmed' || status === 'completed') {
+      const bookingSnapshot: BookingDto = updatedItem;
+      await petService.syncFromBooking(bookingSnapshot, {
+        staffNote:
+          status === 'completed'
+            ? `Đã hoàn thành dịch vụ ${bookingSnapshot.serviceName}. Bé khỏe mạnh và vui vẻ.`
+            : undefined,
+      });
+    }
+
     return buildApiResponse(updatedItem, 'Cập nhật trạng thái lịch hẹn thành công');
   },
 

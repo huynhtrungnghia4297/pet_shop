@@ -1,10 +1,25 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarClock, Home, Phone, Sparkles } from 'lucide-react';
+import {
+  AlertTriangle,
+  CalendarClock,
+  HeartPulse,
+  Home,
+  Phone,
+  Sparkles,
+  UserCheck,
+} from 'lucide-react';
+import { PetProfileDrawer } from '@/components/admin/PetProfileDrawer';
 import { BOOKING_STATUS_META, formatDateVi, formatVnd } from '@/lib/utils';
 import { bookingService } from '@/services/bookingService';
-import type { BookingDto, BookingStatus, BookingType } from '@/types';
+import { petService } from '@/services/petService';
+import type {
+  BookingDto,
+  BookingStatus,
+  BookingType,
+  PetProfileDto,
+} from '@/types';
 
 const STATUS_OPTIONS: BookingStatus[] = [
   'pending',
@@ -14,20 +29,52 @@ const STATUS_OPTIONS: BookingStatus[] = [
   'cancelled',
 ];
 
+function matchPetProfile(
+  booking: BookingDto,
+  pets: PetProfileDto[]
+): PetProfileDto | null {
+  const targetPhone = booking.ownerPhone.replace(/\s+/g, '').trim();
+  const targetName = booking.petName.trim().toLowerCase();
+  return (
+    pets.find(
+      (p) =>
+        p.ownerPhone.replace(/\s+/g, '').trim() === targetPhone &&
+        p.name.trim().toLowerCase() === targetName
+    ) ?? null
+  );
+}
+
 export function AdminBookingsClient() {
   const [bookings, setBookings] = useState<BookingDto[]>([]);
+  const [pets, setPets] = useState<PetProfileDto[]>([]);
   const [typeFilter, setTypeFilter] = useState<'all' | BookingType>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | BookingStatus>('all');
+  const [drawerPet, setDrawerPet] = useState<PetProfileDto | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const loadBookings = useCallback(async () => {
-    const res = await bookingService.getAll();
-    if (res.success) setBookings(res.data);
+  const loadData = useCallback(async () => {
+    const [bRes, pRes] = await Promise.all([
+      bookingService.getAll(),
+      petService.getAll(),
+    ]);
+    if (bRes.success) setBookings(bRes.data);
+    if (pRes.success) {
+      setPets(pRes.data);
+      setDrawerPet((prev) =>
+        prev ? pRes.data.find((p) => p.id === prev.id) ?? prev : null
+      );
+    }
   }, []);
 
   useEffect(() => {
-    void loadBookings();
-    return bookingService.subscribe(() => void loadBookings());
-  }, [loadBookings]);
+    void loadData();
+    const u1 = bookingService.subscribe(() => void loadData());
+    const u2 = petService.subscribe(() => void loadData());
+    return () => {
+      u1();
+      u2();
+    };
+  }, [loadData]);
 
   const filtered = useMemo(() => {
     return bookings.filter((b) => {
@@ -41,6 +88,22 @@ export function AdminBookingsClient() {
     await bookingService.updateStatus(id, status);
   };
 
+  const handleOpenPetProfile = async (booking: BookingDto) => {
+    const existing = matchPetProfile(booking, pets);
+    if (existing) {
+      setDrawerPet(existing);
+      setDrawerOpen(true);
+      return;
+    }
+
+    // Auto-create/sync profile on-demand if not yet in CRM
+    const synced = await petService.syncFromBooking(booking);
+    if (synced.success && synced.data) {
+      setDrawerPet(synced.data);
+      setDrawerOpen(true);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -48,8 +111,8 @@ export function AdminBookingsClient() {
           Quản lý Lịch hẹn Spa &amp; Khách sạn
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Lọc theo loại hình và cập nhật tiến độ xử lý lịch hẹn từ Chờ xác nhận
-          đến Hoàn thành.
+          Nhận diện nhanh khách quen từ Hồ sơ Thú cưng (Pet CRM), xem lưu ý sức
+          khỏe và tự động cập nhật lịch sử chăm sóc khi duyệt/hoàn thành lịch.
         </p>
       </div>
 
@@ -101,6 +164,12 @@ export function AdminBookingsClient() {
         ) : (
           filtered.map((bk) => {
             const meta = BOOKING_STATUS_META[bk.status];
+            const matchedPet = matchPetProfile(bk, pets);
+            const isReturning = matchedPet && matchedPet.visitCount >= 2;
+            const hasAllergy =
+              matchedPet?.allergies &&
+              !matchedPet.allergies.toLowerCase().includes('không ghi nhận');
+
             return (
               <article
                 key={bk.id}
@@ -131,13 +200,25 @@ export function AdminBookingsClient() {
                       >
                         {meta.label}
                       </span>
+
+                      {/* CRM Returning vs First-time Recognition Badge */}
+                      {isReturning ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">
+                          <UserCheck className="h-3 w-3" />
+                          Khách quen • Đã đến {matchedPet.visitCount} lần
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[11px] font-bold text-sky-700">
+                          Lần đầu đến
+                        </span>
+                      )}
                     </div>
 
                     <h2 className="text-base font-bold text-slate-900">
                       {bk.serviceName}
                     </h2>
 
-                    <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-600">
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-600">
                       <span>
                         Thú cưng:{' '}
                         <strong className="text-slate-900">
@@ -158,9 +239,27 @@ export function AdminBookingsClient() {
                       </span>
                     </div>
 
+                    {/* Quick CRM Allergy Warning & Booking Health Notes */}
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                      {hasAllergy && (
+                        <span className="inline-flex items-center gap-1 rounded-lg border border-rose-200/80 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700">
+                          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                          {matchedPet.allergies}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => void handleOpenPetProfile(bk)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50/80 px-2.5 py-1 text-[11px] font-semibold text-teal-800 transition-colors hover:bg-teal-600 hover:text-white"
+                      >
+                        <HeartPulse className="h-3.5 w-3.5" />
+                        <span>Xem hồ sơ &amp; Ghi chú bé</span>
+                      </button>
+                    </div>
+
                     {bk.healthNotes && (
                       <p className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                        <strong>Ghi chú sức khỏe:</strong> {bk.healthNotes}
+                        <strong>Ghi chú lịch hẹn:</strong> {bk.healthNotes}
                       </p>
                     )}
                   </div>
@@ -208,6 +307,17 @@ export function AdminBookingsClient() {
           })
         )}
       </div>
+
+      {/* Quick Pet Profile & Health Notes Drawer */}
+      <PetProfileDrawer
+        isOpen={drawerOpen}
+        pet={drawerPet}
+        onClose={() => setDrawerOpen(false)}
+        onSaved={(saved) => {
+          setDrawerPet(saved);
+          void loadData();
+        }}
+      />
     </div>
   );
 }

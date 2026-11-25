@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShoppingBag, Star } from 'lucide-react';
-import { ScaleOnHover } from '@/components/motion/MotionPrimitives';
+import { motion } from 'framer-motion';
+import { Check, ShoppingBag, Star } from 'lucide-react';
+import { Tilt3DCard } from '@/components/motion/MotionPrimitives';
 import { useCart } from '@/context/CartContext';
 import { CATEGORY_LABELS, formatVnd, PET_TARGET_LABELS } from '@/lib/utils';
 import type { ProductDto } from '@/types';
@@ -14,6 +16,8 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
+  const [justAdded, setJustAdded] = useState(false);
+
   const defaultVariant = product.variants[0] ?? {
     id: 'default',
     label: 'Tiêu chuẩn',
@@ -35,11 +39,13 @@ export function ProductCard({ product }: ProductCardProps) {
       quantity: 1,
       maxStock: Math.max(1, defaultVariant.stock || product.stock),
     });
+    setJustAdded(true);
+    window.setTimeout(() => setJustAdded(false), 1100);
   };
 
   return (
-    <ScaleOnHover className="h-full">
-      <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-soft transition-shadow hover:border-teal-200 hover:shadow-card">
+    <Tilt3DCard maxTilt={5} className="h-full rounded-2xl">
+      <article className="group surface-card-elevated flex h-full flex-col overflow-hidden rounded-2xl">
         {/* Clean Image Frame — Zero overlay text or CTAs on image */}
         <Link
           href={`/shop/${product.slug}`}
@@ -50,23 +56,23 @@ export function ProductCard({ product }: ProductCardProps) {
             alt={`${product.name} - ${CATEGORY_LABELS[product.category]} tại PawPalace`}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-cover transition-transform duration-500 hover:scale-105"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
           />
         </Link>
 
         {/* Separated Content Block */}
         <div className="flex flex-1 flex-col p-5">
           <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
-            <span className="rounded-lg bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700">
+            <span className="rounded-lg bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700 ring-1 ring-teal-200/60">
               {CATEGORY_LABELS[product.category]}
             </span>
-            <span className="rounded-lg bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
+            <span className="rounded-lg bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 ring-1 ring-sky-200/60">
               {PET_TARGET_LABELS[product.petTarget]}
             </span>
           </div>
 
-          <Link href={`/shop/${product.slug}`} className="group">
-            <h3 className="line-clamp-2 text-base font-bold text-slate-900 transition-colors group-hover:text-teal-600">
+          <Link href={`/shop/${product.slug}`}>
+            <h3 className="line-clamp-2 text-base font-bold text-slate-900 transition-colors group-hover:text-teal-700">
               {product.name}
             </h3>
           </Link>
@@ -93,7 +99,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           </div>
 
-          <div className="mt-auto flex items-end justify-between gap-3 border-t border-slate-100 pt-4">
+          <div className="mt-auto flex items-end justify-between gap-3 border-t border-teal-100/60 pt-4">
             <div>
               <div className="text-lg font-bold text-teal-700">
                 {formatVnd(product.price)}
@@ -105,18 +111,34 @@ export function ProductCard({ product }: ProductCardProps) {
               )}
             </div>
 
-            <button
+            <motion.button
               type="button"
               onClick={handleQuickAdd}
               disabled={isOutOfStock}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+              whileHover={isOutOfStock ? undefined : { scale: 1.04 }}
+              whileTap={isOutOfStock ? undefined : { scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 20 }}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none ${
+                justAdded
+                  ? 'bg-emerald-600 shadow-emerald-600/25'
+                  : 'bg-gradient-to-r from-teal-600 to-emerald-600 shadow-teal-600/20 hover:from-teal-700 hover:to-emerald-700'
+              }`}
             >
-              <ShoppingBag className="h-3.5 w-3.5" />
-              <span>{isOutOfStock ? 'Hết hàng' : 'Thêm giỏ'}</span>
-            </button>
+              {justAdded ? (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  <span>Đã thêm</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="h-3.5 w-3.5" />
+                  <span>{isOutOfStock ? 'Hết hàng' : 'Thêm giỏ'}</span>
+                </>
+              )}
+            </motion.button>
           </div>
         </div>
       </article>
-    </ScaleOnHover>
+    </Tilt3DCard>
   );
 }

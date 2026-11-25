@@ -16,10 +16,23 @@ export default function PetHotelPage() {
     <>
       <JsonLd data={buildPetStoreJsonLd()} />
 
-      <section className="border-b border-sky-100 bg-gradient-to-b from-[#EFF6FF] to-white py-14">
-        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden border-b border-sky-100 bg-gradient-to-b from-[#EFF6FF] via-[#F8FAFC] to-white py-14">
+        <div
+          aria-hidden="true"
+          className="bg-paw-dot-grid-indigo pointer-events-none absolute inset-0 opacity-30"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-indigo-500/12 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-emerald-500/12 blur-3xl"
+        />
+
+        <div className="relative z-10 mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
           <FadeInUp>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-indigo-700 shadow-2xs ring-1 ring-indigo-200">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-4 py-1.5 text-xs font-semibold text-indigo-700 shadow-2xs ring-1 ring-indigo-200">
               <Home className="h-3.5 w-3.5" />
               <span>Khách Sạn Thú Cưng 5 Sao • Giám Sát 24/7</span>
             </span>

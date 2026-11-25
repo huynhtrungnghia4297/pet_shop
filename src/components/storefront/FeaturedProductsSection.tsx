@@ -34,12 +34,22 @@ export function FeaturedProductsSection() {
   return (
     <section
       aria-labelledby="featured-products-heading"
-      className="bg-white py-20"
+      className="relative overflow-hidden bg-gradient-to-b from-white via-[#F8FAFC] to-white py-20"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      {/* Subtle Ambient Glows */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-24 top-1/3 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-24 bottom-12 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl"
+      />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <span className="inline-block rounded-full bg-teal-50 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-teal-700">
+            <span className="inline-block rounded-full border border-teal-200/80 bg-teal-50/90 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-teal-700">
               Cửa hàng PawPalace
             </span>
             <h2
@@ -55,7 +65,7 @@ export function FeaturedProductsSection() {
           </div>
           <Link
             href="/shop"
-            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-teal-200 bg-teal-50/70 px-5 py-2.5 text-sm font-semibold text-teal-700 transition-colors hover:bg-teal-100"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-teal-200 bg-white px-5 py-2.5 text-sm font-semibold text-teal-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-50"
           >
             <span>Xem tất cả sản phẩm</span>
             <ArrowRight className="h-4 w-4" />
@@ -63,7 +73,7 @@ export function FeaturedProductsSection() {
         </div>
 
         {products.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
+          <div className="surface-card-elevated rounded-2xl border-dashed p-12 text-center">
             <p className="text-sm text-slate-500">
               Hiện chưa có sản phẩm nào đang mở bán. Quản trị viên có thể bật
               hiển thị trong trang Quản trị sản phẩm.

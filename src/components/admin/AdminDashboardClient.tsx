@@ -6,9 +6,11 @@ import {
   ArrowRight,
   CalendarClock,
   PackageCheck,
+  PawPrint,
   ShoppingCart,
   TrendingUp,
 } from 'lucide-react';
+import { AdminAnalyticsCharts } from '@/components/admin/AdminAnalyticsCharts';
 import {
   BOOKING_STATUS_META,
   formatDateVi,
@@ -17,23 +19,27 @@ import {
 } from '@/lib/utils';
 import { bookingService } from '@/services/bookingService';
 import { orderService } from '@/services/orderService';
+import { petService } from '@/services/petService';
 import { productService } from '@/services/productService';
-import type { BookingDto, OrderDto, ProductDto } from '@/types';
+import type { BookingDto, OrderDto, PetProfileDto, ProductDto } from '@/types';
 
 export function AdminDashboardClient() {
   const [products, setProducts] = useState<ProductDto[]>([]);
   const [bookings, setBookings] = useState<BookingDto[]>([]);
   const [orders, setOrders] = useState<OrderDto[]>([]);
+  const [pets, setPets] = useState<PetProfileDto[]>([]);
 
   const loadAll = useCallback(async () => {
-    const [pRes, bRes, oRes] = await Promise.all([
+    const [pRes, bRes, oRes, petRes] = await Promise.all([
       productService.getAll(),
       bookingService.getAll(),
       orderService.getAll(),
+      petService.getAll(),
     ]);
     if (pRes.success) setProducts(pRes.data);
     if (bRes.success) setBookings(bRes.data);
     if (oRes.success) setOrders(oRes.data);
+    if (petRes.success) setPets(petRes.data);
   }, []);
 
   useEffect(() => {
@@ -41,10 +47,12 @@ export function AdminDashboardClient() {
     const u1 = productService.subscribe(() => void loadAll());
     const u2 = bookingService.subscribe(() => void loadAll());
     const u3 = orderService.subscribe(() => void loadAll());
+    const u4 = petService.subscribe(() => void loadAll());
     return () => {
       u1();
       u2();
       u3();
+      u4();
     };
   }, [loadAll]);
 
@@ -72,7 +80,7 @@ export function AdminDashboardClient() {
     {
       label: 'Lịch hẹn chờ duyệt',
       value: String(pendingBookings),
-      sub: `Tổng ${bookings.length} lịch Spa & Khách sạn`,
+      sub: `Tổng ${bookings.length} lịch • ${pets.length} hồ sơ bé`,
       icon: CalendarClock,
       iconBg: 'bg-sky-50 text-sky-600',
       href: '/admin/bookings',
@@ -104,17 +112,26 @@ export function AdminDashboardClient() {
             Tổng quan Quản trị PawPalace
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Theo dõi hiệu suất cửa hàng, lịch hẹn Spa/Khách sạn và đồng bộ sản
-            phẩm theo thời gian thực.
+            Theo dõi báo cáo doanh thu, hồ sơ thú cưng CRM, lịch hẹn Spa/Khách
+            sạn và đồng bộ cửa hàng theo thời gian thực.
           </p>
         </div>
-        <Link
-          href="/admin/products"
-          className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-teal-700"
-        >
-          <span>Quản lý sản phẩm</span>
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+        <div className="flex flex-wrap gap-2.5">
+          <Link
+            href="/admin/pets"
+            className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+          >
+            <PawPrint className="h-4 w-4" />
+            <span>Hồ sơ Thú cưng ({pets.length})</span>
+          </Link>
+          <Link
+            href="/admin/products"
+            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-teal-700"
+          >
+            <span>Quản lý sản phẩm</span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
       {/* KPI Grid */}
@@ -145,6 +162,9 @@ export function AdminDashboardClient() {
           );
         })}
       </div>
+
+      {/* Analytics & Report Charts */}
+      <AdminAnalyticsCharts orders={orders} bookings={bookings} />
 
       {/* Recent Tables */}
       <div className="grid gap-6 lg:grid-cols-2">

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  BarChart3,
   CalendarClock,
   ExternalLink,
   LayoutDashboard,
@@ -19,8 +20,10 @@ import { MOCK_MODE } from '@/services/apiClient';
 
 const ADMIN_NAV = [
   { href: '/admin', label: 'Tổng quan Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/admin/reports', label: 'Báo cáo & Thống kê', icon: BarChart3 },
   { href: '/admin/products', label: 'Quản lý Sản phẩm', icon: Package },
   { href: '/admin/bookings', label: 'Lịch hẹn Spa & Hotel', icon: CalendarClock },
+  { href: '/admin/pets', label: 'Hồ sơ Thú cưng', icon: PawPrint },
   { href: '/admin/orders', label: 'Quản lý Đơn hàng', icon: ShoppingCart },
 ];
 

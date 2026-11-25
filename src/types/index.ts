@@ -191,6 +191,22 @@ export interface SpaServicePackage {
   tiers: WeightPriceTier[];
 }
 
+export type HotelAmenityIconKey =
+  | 'air'
+  | 'shield'
+  | 'utensils'
+  | 'camera'
+  | 'sparkles'
+  | 'bed'
+  | 'trees'
+  | 'heart';
+
+export interface HotelDetailedAmenity {
+  icon: HotelAmenityIconKey;
+  title: string;
+  detail: string;
+}
+
 export interface HotelRoomTier {
   id: string;
   name: string;
@@ -200,6 +216,10 @@ export interface HotelRoomTier {
   maxWeightKg: number;
   badge: string;
   imageUrl: string;
+  galleryImages: string[];
+  galleryCaptions?: string[];
+  descriptionDetail: string;
+  detailedAmenities: HotelDetailedAmenity[];
   features: string[];
   highlighted?: boolean;
 }
@@ -258,4 +278,61 @@ export interface AuthResponseDto {
   member: MemberDto;
   accessToken: string;
 }
+
+export type PetGender = 'male' | 'female';
+
+export interface PetVisitLogDto {
+  id: string;
+  bookingCode?: string;
+  date: string; // YYYY-MM-DD
+  serviceType: BookingType;
+  serviceName: string;
+  weightKgAtVisit: number;
+  staffNote: string;
+  status?: BookingStatus;
+}
+
+export interface PetProfileDto {
+  id: string;
+  petCode: string;
+  name: string;
+  species: 'dog' | 'cat';
+  breed: string;
+  gender: PetGender;
+  birthDate?: string;
+  ageText: string;
+  weightKg: number;
+  avatarUrl: string;
+  ownerName: string;
+  ownerPhone: string;
+  ownerEmail?: string;
+  allergies?: string;
+  temperament?: string;
+  healthNotes?: string;
+  visitCount: number;
+  lastVisitDate: string;
+  visitHistory: PetVisitLogDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePetProfileDto {
+  name: string;
+  species: 'dog' | 'cat';
+  breed: string;
+  gender: PetGender;
+  birthDate?: string;
+  ageText: string;
+  weightKg: number;
+  avatarUrl: string;
+  ownerName: string;
+  ownerPhone: string;
+  ownerEmail?: string;
+  allergies?: string;
+  temperament?: string;
+  healthNotes?: string;
+}
+
+export type UpdatePetProfileDto = Partial<CreatePetProfileDto>;
+
 
